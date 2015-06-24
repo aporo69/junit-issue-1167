@@ -1,0 +1,50 @@
+--- Parameterized.java.old	2015-06-24 16:50:18.000000000 +0200
++++ Parameterized.java.new	2015-06-24 17:03:50.000000000 +0200
+@@ -9,8 +9,10 @@
+  import java.util.ArrayList;
+  import java.util.Arrays;
+  import java.util.Collections;
++ import java.util.HashMap;
+  import java.util.List;
+  
++ import java.util.Map;
+  import org.junit.runner.Runner;
+  import org.junit.runners.model.FrameworkMethod;
+  import org.junit.runners.model.InitializationError;
+@@ -230,6 +232,17 @@
+          Class<? extends ParametersRunnerFactory> value() default BlockJUnit4ClassRunnerWithParametersFactory.class;
+      }
+  
++     protected static final Map<Character, String> ESCAPE_SEQUENCES = new HashMap<Character, String>();
++ 
++     static {
++         ESCAPE_SEQUENCES.put('\0', "\\\\0");
++         ESCAPE_SEQUENCES.put('\t', "\\\\t");
++         ESCAPE_SEQUENCES.put('\b', "\\\\b");
++         ESCAPE_SEQUENCES.put('\n', "\\\\n");
++         ESCAPE_SEQUENCES.put('\r', "\\\\r");
++         ESCAPE_SEQUENCES.put('\f', "\\\\f");
++     }
++ 
+      private static final ParametersRunnerFactory DEFAULT_FACTORY = new BlockJUnit4ClassRunnerWithParametersFactory();
+  
+      private static final List<Runner> NO_RUNNERS = Collections.<Runner>emptyList();
+@@ -345,7 +358,17 @@
+          String finalPattern = pattern.replaceAll("\\{index\\}",
+                  Integer.toString(index));
+          String name = MessageFormat.format(finalPattern, parameters);
+-         return new TestWithParameters("[" + name + "]", testClass,
++         return new TestWithParameters("[" + sanitizeEscapeSequencesWithName(name) + "]", testClass,
+                  Arrays.asList(parameters));
++     }
++ 
++     private static String sanitizeEscapeSequencesWithName(final String name) {
++ 
++         String result = name;
++         for (Map.Entry<Character, String> currentSequence : ESCAPE_SEQUENCES.entrySet()) {
++             result = result.replaceAll("" + currentSequence.getKey(), currentSequence.getValue());
++         }
++ 
++         return result;
+      }
+  }
